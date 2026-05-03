@@ -1,13 +1,25 @@
-# Based on xv6-riscv Makefile; see LICENSE.
+# Makefile for riscv-skyline.
+#
+# Layout:
+#   kernel/    this Makefile + drivers + mp1.S + linker script
+#   tests/     pytest-style test bench (was test/ in the upstream tree)
+#   tools/     vendor demo.o / memory.o staging (gitignored, replaced by
+#              kernel/demo.c + kernel/memory.c in Phase 4-5)
 
-TOOLPREFIX=riscv64-unknown-elf-
-QEMU=qemu-system-riscv64
+TOOLPREFIX = riscv64-unknown-elf-
+QEMU       = qemu-system-riscv64
 
-CC=$(TOOLPREFIX)gcc
-AS=$(TOOLPREFIX)as
-LD=$(TOOLPREFIX)ld
-OBJCOPY=$(TOOLPREFIX)objcopy
-OBJDUMP=$(TOOLPREFIX)objdump
+CC      = $(TOOLPREFIX)gcc
+AS      = $(TOOLPREFIX)as
+LD      = $(TOOLPREFIX)ld
+OBJCOPY = $(TOOLPREFIX)objcopy
+OBJDUMP = $(TOOLPREFIX)objdump
+
+# demo.o + memory.o are still vendor binaries while Phase 4-5 are in
+# flight. Override e.g. `make DEMO_OBJ=demo.o MEM_OBJ=memory.o` once the
+# clean-room rewrites land in kernel/.
+DEMO_OBJ ?= ../tools/_vendor/demo.o
+MEM_OBJ  ?= ../tools/_vendor/memory.o
 
 CORE_OBJS = \
 	start.o \
@@ -20,9 +32,6 @@ CORE_OBJS = \
 	vga.o \
 	mp1.o
 
-# TEST_OBJS = CORE_OBJS minus halt.o (replaced by test/halt_replace.o), plus
-# test bench objects.  demo.o is NOT linked; test/test_main.o provides main()
-# and test/test_globals.o provides the four skyline globals.
 TEST_OBJS = \
 	start.o \
 	string.o \
@@ -32,40 +41,54 @@ TEST_OBJS = \
 	console.o \
 	vga.o \
 	mp1.o \
-	test/halt_replace.o \
-	test/setjmp.o \
-	test/clobber.o \
-	test/fb.o \
-	test/test_globals.o \
-	test/test_stubs.o \
-	test/test_runner.o \
-	test/tests_star.o \
-	test/tests_window.o \
-	test/tests_beacon.o \
-	test/tests_extra.o \
-	test/test_main.o
+	../tests/halt_replace.o \
+	../tests/setjmp.o \
+	../tests/clobber.o \
+	../tests/fb.o \
+	../tests/test_globals.o \
+	../tests/test_stubs.o \
+	../tests/test_runner.o \
+	../tests/tests_star.o \
+	../tests/tests_window.o \
+	../tests/tests_beacon.o \
+	../tests/tests_extra.o \
+	../tests/test_main.o
 
-CFLAGS = -Wall -fno-omit-frame-pointer -ggdb -gdwarf-2
+CFLAGS  = -Wall -fno-omit-frame-pointer -ggdb -gdwarf-2
 CFLAGS += -mcmodel=medany -fno-pie -no-pie -march=rv64g -mabi=lp64d
 CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -fno-asynchronous-unwind-tables
-CFLAGS += -I. -Itest -DDEBUG -DTRACE
+CFLAGS += -I. -I../tests -DDEBUG -DTRACE
+
+# Default goal: production demo binary.
+.DEFAULT_GOAL := all
+.PHONY: all clean run-demo run-test debug-demo debug-test
 
 all: demo.elf
 
-demo.elf: $(CORE_OBJS)
-	$(LD) $(LDFLAGS) -T kernel.ld -o $@ $^ demo.o memory.o
+demo.elf: $(CORE_OBJS) $(DEMO_OBJ) $(MEM_OBJ)
+	$(LD) $(LDFLAGS) -T kernel.ld -o $@ $^
 
-test.elf: $(TEST_OBJS)
-	$(LD) $(LDFLAGS) -T kernel.ld -o $@ $^ memory.o
+test.elf: $(TEST_OBJS) $(MEM_OBJ)
+	$(LD) $(LDFLAGS) -T kernel.ld -o $@ $^
+
+# Pattern rules need to match the cross-directory test bench objects.
+%.o: %.S
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf console.o halt.o intr.o serial.o start.o string.o trap.o vga.o mp1.o
-	rm -rf test/*.o
-	rm -rf *.elf
+	rm -rf *.o ../tests/*.o *.elf
 
-run-demo:
-	$(QEMU) -machine virt -bios none -kernel demo.elf -m 128M -serial mon:stdio -device bochs-display
+QEMUOPTS  = -machine virt -bios none -m 128M -serial mon:stdio
 
-run-test:
-	$(QEMU) -machine virt -bios none -kernel test.elf -m 128M -serial mon:stdio -nographic
+run-demo: demo.elf
+	$(QEMU) $(QEMUOPTS) -kernel demo.elf -device bochs-display
+
+run-test: test.elf
+	$(QEMU) $(QEMUOPTS) -kernel test.elf -nographic
+
+debug-demo: demo.elf
+	$(QEMU) $(QEMUOPTS) -kernel demo.elf -device bochs-display -S -s
+
+debug-test: test.elf
+	$(QEMU) $(QEMUOPTS) -kernel test.elf -nographic -S -s
