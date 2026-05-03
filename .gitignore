@@ -1,0 +1,28 @@
+# Build artifacts
+*.o
+*.elf
+*.asm
+*.raw
+*.img
+*.ppm
+_build/
+bin/
+
+# Editor / OS junk
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Vendor staging area (closed-source x86_64 binaries used as a temporary
+# build shim; replaced by clean-room rewrites in kernel/. Must never be
+# committed.)
+tools/_vendor/
+
+# Local capture scratch
+docs/img/skyline.cast
