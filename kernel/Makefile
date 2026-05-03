@@ -15,11 +15,11 @@ LD      = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
-# demo.o + memory.o are still vendor binaries while Phase 4-5 are in
-# flight. Override e.g. `make DEMO_OBJ=demo.o MEM_OBJ=memory.o` once the
-# clean-room rewrites land in kernel/.
-DEMO_OBJ ?= ../tools/_vendor/demo.o
-MEM_OBJ  ?= ../tools/_vendor/memory.o
+# Both demo.o and memory.o are built from clean-room sources in this
+# directory. Vendor stubs under tools/_vendor/ remain only as historical
+# build shims and are not required for any build target.
+DEMO_OBJ ?= demo.o
+MEM_OBJ  ?= memory.o
 
 CORE_OBJS = \
 	start.o \

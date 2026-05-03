@@ -113,7 +113,10 @@ void vga_attach(uint64_t cfgaddr, uint16_t * fbuf) {
     cfg->bar[2] = -1;
     bar = cfg->bar[2];
     ctlsize = (~bar | 0xF) + 1;
-    ctlbase = fbuf + fbsize;
+    // fbuf is uint16_t*, so plain `fbuf + fbsize` would advance by
+    // fbsize * 2 bytes. Cast to char* so we land on the byte after the
+    // VRAM region, where BAR2's MMIO control window lives.
+    ctlbase = (char *)fbuf + fbsize;
 
     assert (((uintptr_t)ctlbase & (ctlsize - 1)) == 0);
     cfg->bar[2] = (uint32_t)(uintptr_t)ctlbase;
