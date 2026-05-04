@@ -71,40 +71,34 @@ static uint64_t find_bochs_display(void) {
     panic("bochs-display not found on PCI bus 0");
 }
 
-// Building silhouettes are drawn directly to the framebuffer (mp1.S
-// only knows how to paint stars / windows / beacon; the dark building
-// box itself is the demo driver's responsibility).
-struct demo_building {
-    uint16_t x, y, w, h;
-};
-
-#define MAX_BUILDINGS 12
-static struct demo_building buildings[MAX_BUILDINGS];
-static int                  n_buildings;
-
-// Beacon perches on this building's roof.
+// Beacon position remembered between scene composition and frame loop.
 static uint16_t beacon_x_global, beacon_y_global;
 
-// Composite scene: stars across the entire night sky, a row of building
-// silhouettes along the bottom with lit windows on each, and a single
-// blinking beacon perched on top of the tallest building.
+// Compose a minimalist night scene -- stars across the whole screen and
+// dense clusters of tiny lit windows along the bottom that visually
+// form building silhouettes. No explicit silhouette is drawn; the dark
+// background between the lit windows is what the eye reads as the
+// building. (This matches the "dot-pattern" aesthetic of the original
+// reference demo, with a warmer yellow tint instead of plain white.)
 static void compose_scene(void) {
-    // Stars: 280 random pinpricks across the entire screen. Buildings
-    // will be drawn on top of any star that falls inside them.
-    for (int i = 0; i < 280; i++) {
+    // Stars: 600 single-pixel points across the entire screen.
+    // Predominantly white with a faint warm tint so they read as
+    // starlight rather than Christmas lights.
+    for (int i = 0; i < 600; i++) {
         uint16_t x = xorshift32() % SKYLINE_WIDTH;
         uint16_t y = xorshift32() % SKYLINE_HEIGHT;
         uint16_t color;
-        switch (xorshift32() & 0x7) {
-        case 0:  color = 0xFFE0; break; // tiny touch of yellow
+        switch (xorshift32() & 0xF) {
+        case 0:  color = 0xFFE0; break; // touch of yellow
         case 1:  color = 0xFFDE; break; // pale cream
         default: color = 0xFFFF; break; // plain white
         }
         add_star(x, y, color);
     }
 
-    // Window palette: warm-yellow lit windows. Mixing primaries in here
-    // looked alien; real lit windows are warm.
+    // Window palette: warm yellow / amber. The reference demo uses
+    // near-white; we tilt warmer so the city face reads as glowing
+    // tungsten lights rather than fluorescent.
     static const uint16_t window_palette[] = {
         0xFFE0,  // bright yellow
         0xFE60,  // soft yellow
@@ -112,35 +106,29 @@ static void compose_scene(void) {
         0xFC00,  // dim amber
     };
 
-    // Generate a deterministic city: 7 buildings with varying widths
-    // and heights. Each building gets a silhouette stored for the
-    // frame loop and a grid of lit windows seeded into mp1's array.
-    n_buildings            = 7;
+    // 9 buildings, all in the lower 30% of the screen, varying tops.
+    // Window pitch is small (3x3 cells) so each building is a dense
+    // cluster of "windows" rather than a grid of fat blocks.
+    int      n_buildings   = 9;
     uint16_t city_left     = 20;
-    uint16_t spacing       = 88;          // 7 * 88 + 20 < 640
+    uint16_t spacing       = 68;          // 9 * 68 + 20 < 640
     uint16_t tallest_top   = SKYLINE_HEIGHT;
     uint16_t tallest_x     = 0;
-    uint16_t tallest_w     = 60;
+    uint16_t tallest_w     = 50;
     int      p             = 0;
 
     for (int b = 0; b < n_buildings; b++) {
         uint16_t bx  = city_left + (uint16_t)(b * spacing);
-        uint16_t bw  = 60 + (uint16_t)(xorshift32() % 20);   // 60..79
-        uint16_t top = 230 + (uint16_t)(xorshift32() % 140); // 230..369
-        uint16_t bh  = SKYLINE_HEIGHT - top;
+        uint16_t bw  = 44 + (uint16_t)(xorshift32() % 20);   // 44..63
+        uint16_t top = 320 + (uint16_t)(xorshift32() % 80);  // 320..399
 
-        buildings[b] = (struct demo_building){
-            .x = bx, .y = top, .w = bw, .h = bh,
-        };
-
-        // Window grid: smaller cells (6x8) packed denser along the face.
-        // Skip ~1/4 randomly so the building looks "lived in", not
-        // perfectly uniform.
-        for (uint16_t wy = top + 8; wy + 10 < SKYLINE_HEIGHT - 4; wy += 14) {
-            for (uint16_t wx = bx + 6; wx + 8 < bx + bw - 4; wx += 10) {
-                if ((xorshift32() & 0x3) == 0) continue;
+        // Pixel-dense window cluster. 3x3 lit cells on a 6-pixel pitch,
+        // skip ~30% so the cluster reads as a textured silhouette.
+        for (uint16_t wy = top + 4; wy + 4 < SKYLINE_HEIGHT - 2; wy += 6) {
+            for (uint16_t wx = bx + 3; wx + 4 < bx + bw - 2; wx += 6) {
+                if ((xorshift32() % 10) < 3) continue;
                 uint16_t color = window_palette[(uint32_t)p++ & 0x3];
-                add_window(wx, wy, 6, 8, color);
+                add_window(wx, wy, 3, 3, color);
             }
         }
 
@@ -156,20 +144,6 @@ static void compose_scene(void) {
     beacon_y_global = tallest_top - 12;
     start_beacon(beacon_img, beacon_x_global, beacon_y_global,
                  8, 60, 30);
-}
-
-// Paint a solid-color box onto the framebuffer; clipped to screen.
-static void fill_rect(uint16_t * fbuf, int x, int y, int w, int h,
-                      uint16_t color) {
-    if (x < 0) { w += x; x = 0; }
-    if (y < 0) { h += y; y = 0; }
-    if (x + w > SKYLINE_WIDTH)  w = SKYLINE_WIDTH  - x;
-    if (y + h > SKYLINE_HEIGHT) h = SKYLINE_HEIGHT - y;
-    if (w <= 0 || h <= 0) return;
-    for (int row = 0; row < h; row++) {
-        uint16_t * line = fbuf + (uint64_t)(y + row) * SKYLINE_WIDTH + x;
-        for (int col = 0; col < w; col++) line[col] = color;
-    }
 }
 
 // Tight CPU spin -- the build is freestanding without a timer driver
@@ -196,25 +170,19 @@ void main(void) {
             (unsigned)skyline_beacon.x, (unsigned)skyline_beacon.y);
 
     // Animation loop, drawn back-to-front:
-    //   1. clear to deep-night sky (very dark blue)
-    //   2. paint stars (some will be inside buildings -- they get
-    //      occluded by step 3)
-    //   3. paint each building's dark silhouette
-    //   4. paint each lit window on top of its building
-    //   5. paint the blinking beacon last so it overlays everything
+    //   1. clear to black night sky
+    //   2. paint stars across the whole screen
+    //   3. paint lit windows on top (their dark surroundings form
+    //      the implicit building silhouettes)
+    //   4. paint the blinking beacon last so it overlays everything
     uint64_t t = 0;
     const long pixels = (long)SKYLINE_WIDTH * SKYLINE_HEIGHT;
     for (;;) {
         for (long i = 0; i < pixels; i++)
-            fbuf[i] = 0x0001;   // deep night sky
+            fbuf[i] = 0x0000;   // black night sky
 
         for (struct skyline_star * s = skyline_star_list; s != 0; s = s->next)
             draw_star(fbuf, s);
-
-        for (int b = 0; b < n_buildings; b++) {
-            const struct demo_building * bd = &buildings[b];
-            fill_rect(fbuf, bd->x, bd->y, bd->w, bd->h, 0x0841); // very dark gray
-        }
 
         for (uint16_t i = 0; i < skyline_win_cnt; i++)
             draw_window(fbuf, &skyline_windows[i]);
