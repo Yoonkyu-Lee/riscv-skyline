@@ -1,0 +1,103 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  QEMU_VERSION: 9.0.2
+  QEMU_PREFIX: /opt/qemu
+
+jobs:
+  build-and-test:
+    # ubuntu-24.04 ships gcc-riscv64-unknown-elf 13.x. The bochs-display
+    # device riscv-skyline drives is in stock QEMU; we still build 9.0.2
+    # from source (cached) to match what `make run-demo` runs locally.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install cross toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            gcc-riscv64-unknown-elf \
+            binutils-riscv64-unknown-elf \
+            python3
+          echo "--- toolchain versions ---"
+          riscv64-unknown-elf-gcc --version | head -1
+          python3 --version
+
+      - name: cache QEMU ${{ env.QEMU_VERSION }}
+        id: cache-qemu
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.QEMU_PREFIX }}
+          key: qemu-${{ env.QEMU_VERSION }}-riscv64-${{ runner.os }}
+
+      - name: install QEMU build deps
+        if: steps.cache-qemu.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build pkg-config python3-venv \
+            libglib2.0-dev libpixman-1-dev libfdt-dev
+
+      - name: build QEMU ${{ env.QEMU_VERSION }} (riscv64-softmmu)
+        if: steps.cache-qemu.outputs.cache-hit != 'true'
+        run: |
+          set -e
+          curl -fsSL "https://download.qemu.org/qemu-${QEMU_VERSION}.tar.xz" -o qemu.tar.xz
+          mkdir qemu-src
+          tar -xf qemu.tar.xz -C qemu-src --strip-components=1
+          cd qemu-src
+          mkdir build
+          cd build
+          ../configure \
+            --prefix="${QEMU_PREFIX}" \
+            --target-list=riscv64-softmmu \
+            --disable-werror \
+            --disable-docs \
+            --disable-tools \
+            --disable-gtk \
+            --disable-sdl \
+            --disable-vnc
+          make -j"$(nproc)"
+          sudo make install
+
+      - name: put QEMU on PATH and verify
+        run: |
+          echo "${QEMU_PREFIX}/bin" >> "$GITHUB_PATH"
+          "${QEMU_PREFIX}/bin/qemu-system-riscv64" --version | head -1
+
+      - name: build demo.elf
+        working-directory: kernel
+        run: |
+          make demo.elf
+          test -f demo.elf
+
+      - name: build test bench
+        working-directory: kernel
+        run: make test.elf
+
+      - name: run test bench in QEMU
+        working-directory: kernel
+        run: |
+          set -o pipefail
+          # The bench prints "Total (baseline only): 85/85" and
+          # "Extras: 10/10 passed" on success. Both lines must appear.
+          timeout 120 make run-test 2>&1 | tee /tmp/qemu.log
+          grep -E '^Total \(baseline only\): 85/85' /tmp/qemu.log
+          grep -E 'Extras: 10/10 passed'             /tmp/qemu.log
+
+      - name: upload qemu log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-log
+          path: /tmp/qemu.log
+          if-no-files-found: ignore
