@@ -5,7 +5,11 @@ RISC-V assembly drawing primitives plot stars, lit windows, and a
 blinking lighthouse beacon onto a 640×480 RGB565 framebuffer that the
 kernel wires up over QEMU's `bochs-display` PCI VGA card.
 
-![demo](docs/img/skyline.png)
+![demo](docs/img/skyline.gif)
+
+> 20-second animated capture (beacon blink visible).
+> Static frame: [`docs/img/skyline.png`](docs/img/skyline.png) ·
+> mp4: [`docs/img/skyline.mp4`](docs/img/skyline.mp4)
 
 | What's there       | Detail                                                               |
 | ------------------ | -------------------------------------------------------------------- |
