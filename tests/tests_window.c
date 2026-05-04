@@ -1,4 +1,7 @@
-// tests_window.c -- window-related test cases for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// tests_window.c -- window-related test cases for the test bench
 //
 // 10 cases (matches AG report):
 //   test_add_one_window, test_add_multiple_windows,

@@ -1,4 +1,7 @@
-// test_framework.h -- shared declarations for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// test_framework.h -- shared declarations for the test bench
 //
 // Phase C scope: adds setjmp buffer + fault recovery state.  Will continue
 // to grow in later phases (clobber mask, fb diff helpers, test registry).

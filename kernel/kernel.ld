@@ -1,3 +1,6 @@
+# Copyright (c) 2024-2026 Yoonkyu Lee
+# SPDX-License-Identifier: MIT
+#
 /* Based on linker script from the xv6-riscv project. */
 
 OUTPUT_ARCH("riscv")

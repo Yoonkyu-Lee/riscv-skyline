@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
 // csr.h - Access to RISC-V CSRs
 //
 

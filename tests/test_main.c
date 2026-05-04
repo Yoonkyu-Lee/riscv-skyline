@@ -1,4 +1,7 @@
-// test_main.c -- entry point for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// test_main.c -- entry point for the test bench
 //
 // Replaces demo.o's main().  Phase C adds a recovery smoke test that
 // proves trap-based fault recovery via setjmp/longjmp works end-to-end.
@@ -119,7 +122,7 @@ static void fb_smoke_test(void) {
 static void print_banner(void) {
     kprintf("\n");
     kprintf("==========================================\n");
-    kprintf("[ECE 391 MP1 Custom Test Bench]\n");
+    kprintf("[riscv-skyline test bench]\n");
     kprintf("==========================================\n");
     kprintf("\n");
 }

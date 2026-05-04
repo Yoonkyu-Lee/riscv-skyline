@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
 // tests_extra.c -- bonus / diagnostic tests beyond the 24 AG baseline
 //
 // These don't contribute to the 85pt score; they exist to surface bugs the

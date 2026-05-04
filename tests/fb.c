@@ -1,4 +1,7 @@
-// fb.c -- framebuffer module for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// fb.c -- framebuffer module for the test bench
 //
 // Provides the two 640x480 framebuffers (actual + expected), simple
 // fill / diff helpers, and C reference implementations of the three
@@ -68,7 +71,7 @@ int fb_in_screen(int x, int y) {
 
 // ---- reference drawers ---------------------------------------------------
 //
-// These implement the exact behavior described in the MP1 spec.  They
+// These implement the exact behavior described in the drawing primitive contract.  They
 // serve as the oracle: tests render once with the reference into
 // fb_expected, then call into mp1.S to render into fb_actual, then
 // compare with fb_diff_count.

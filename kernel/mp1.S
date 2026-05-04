@@ -1,7 +1,10 @@
-        # mp1.S -------- ECE 391 MP1 (redo, 2026) --------
+# Copyright (c) 2024-2026 Yoonkyu Lee
+# SPDX-License-Identifier: MIT
+#
+        # mp1.S -- riscv-skyline drawing primitives in RISC-V assembly.
         #
-        # The 4 skyline globals are defined in demo.o (or test_globals.o
-        # for the test bench).  We reference them by name here.
+        # The 4 skyline globals are defined in demo.c (or test_globals.c
+        # for the test bench). We reference them by name here.
 
         .extern skyline_star_list       # struct skyline_star *
         .extern skyline_windows         # struct skyline_window[SKYLINE_WIN_MAX]

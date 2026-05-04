@@ -1,4 +1,7 @@
-// tests_beacon.c -- beacon-related test cases for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// tests_beacon.c -- beacon-related test cases for the test bench
 //
 // 6 cases (matches AG report):
 //   test_start_beacon, test_draw_beacon_simple, test_draw_beacon_null,

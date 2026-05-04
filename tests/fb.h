@@ -1,4 +1,7 @@
-// fb.h -- framebuffer scaffolding for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// fb.h -- framebuffer scaffolding for the test bench
 //
 // The test bench owns two 640x480 16bpp framebuffers in BSS:
 //
@@ -44,7 +47,7 @@ int  fb_in_screen(int x, int y);
 // Reference drawers ----------------------------------------------------
 //
 // Plain-C implementations of draw_star / draw_window / draw_beacon
-// that exactly follow the MP1 spec (row-major 640x480, per-pixel clip
+// that exactly follow the drawing primitive contract (row-major 640x480, per-pixel clip
 // to [0,640)x[0,480), beacon time gate `t % period < ontime`, NULL
 // pointer no-op).  Tests use these to populate fb_expected before
 // invoking mp1.S to populate fb_actual.

@@ -1,4 +1,7 @@
-// test_globals.c -- skyline globals for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// test_globals.c -- skyline globals for the test bench
 //
 // In the original distribution these were defined inside demo.o (which we
 // don't link for test.elf).  Same names + sizes so mp1.S resolves cleanly.

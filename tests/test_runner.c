@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
 // test_runner.c -- per-test driver and AG-style report formatter
 //
 // Each test is invoked through run_test(), which wraps the call in:
@@ -6,7 +9,7 @@
 //   - test_setjmp(...)      (recover from synchronous faults)
 //   - test_recover_armed=1  (fault_handler longjmps instead of panicking)
 //
-// Output mirrors the original Su25 autograder report format so we can
+// Output mirrors the report format so we can
 // diff against tmp/sp25_mp1_final_ag_report.txt.
 
 #include <stdint.h>
@@ -35,7 +38,7 @@ int addr_eq(const void *a, const void *b) { return a == b; }
 // ---- AG-style line printers ---------------------------------------------
 //
 // Header: ">---------<NAME>" + dashes + "PASSED"|"FAILED"
-// Total line width ~56 chars (matches Su25 format).
+// Total line width ~56 chars (matches a 56-char header layout).
 
 static void print_test_header(const char *name, int passed) {
     kprintf(">---------<%s>", name);

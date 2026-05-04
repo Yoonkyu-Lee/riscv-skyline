@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
 // skyline.h
 //
 
@@ -104,7 +107,7 @@ extern void start_beacon (
     uint16_t period,
     uint16_t ontime);
 
-// draw_beacon() draws the beacon to the frame buffer /fbuf/. See MP1 documentation for
+// draw_beacon() draws the beacon to the frame buffer /fbuf/. See the project documentation for
 // more details. Do not assume that /bcn/ is the same as /skyline_beacon/, for testing
 // purposes we may call this function with a different beacon struct.
 

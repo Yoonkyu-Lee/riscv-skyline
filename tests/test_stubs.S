@@ -1,3 +1,6 @@
+# Copyright (c) 2024-2026 Yoonkyu Lee
+# SPDX-License-Identifier: MIT
+#
         # test_stubs.S -- weak stubs for the 8 mp1.S student functions
         #
         # Purpose:

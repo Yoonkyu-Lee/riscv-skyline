@@ -1,3 +1,6 @@
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
 // halt_replace.c -- drop-in replacement for halt.c with fault recovery
 //
 // This module replaces halt.o for test.elf.  It exports the same four

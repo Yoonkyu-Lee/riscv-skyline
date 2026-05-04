@@ -1,4 +1,7 @@
-// tests_star.c -- star-related test cases for the MP1 test bench
+// Copyright (c) 2024-2026 Yoonkyu Lee
+// SPDX-License-Identifier: MIT
+//
+// tests_star.c -- star-related test cases for the test bench
 //
 // 8 cases (matches AG report):
 //   test_add_single_star, test_add_multiple_stars,

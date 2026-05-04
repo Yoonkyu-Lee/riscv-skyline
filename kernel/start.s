@@ -1,3 +1,6 @@
+# Copyright (c) 2024-2026 Yoonkyu Lee
+# SPDX-License-Identifier: MIT
+#
         .section	.text.start
         
         # Set stack pointer. The main thread uses a statically-allocated stack
