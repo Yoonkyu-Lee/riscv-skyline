@@ -8,6 +8,12 @@
 _build/
 bin/
 
+# Exception: kernel/vendor/ holds the original-starter demo.o that
+# the demo binary links against (drawing-loop driver). It is checked
+# in even though it's an .o file.
+!kernel/vendor/
+!kernel/vendor/*.o
+
 # Editor / OS junk
 .vscode/
 .idea/
@@ -19,9 +25,7 @@ bin/
 __pycache__/
 *.pyc
 
-# Vendor staging area (closed-source x86_64 binaries used as a temporary
-# build shim; replaced by clean-room rewrites in kernel/. Must never be
-# committed.)
+# Old historical staging area (no longer used)
 tools/_vendor/
 
 # Local capture scratch

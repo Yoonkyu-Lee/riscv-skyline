@@ -13,7 +13,7 @@ kernel wires up over QEMU's `bochs-display` PCI VGA card.
 | Framebuffer        | 16-byte aligned chunk inside the QEMU virt PCIe MMIO window; 640×480, 16 bpp RGB565 |
 | Display driver     | PCI scan + bochs VBE programming in `kernel/vga.c`                   |
 | Allocator          | 256 KB BSS arena + 16-byte block free list (`kernel/memory.c`)       |
-| Drawing loop       | `kernel/demo.c`: clear → stars → building silhouettes → lit windows → blinking beacon |
+| Drawing loop       | `kernel/vendor/demo.o` (starter binary, see [`NOTICE`](NOTICE)): clear → stars → lit windows → blinking beacon |
 | Test bench         | 85 baseline + 10 extra cases over the 8 primitives, faulting cases recovered through a `setjmp` trap shim |
 
 ## Quick start
@@ -64,6 +64,7 @@ riscv-skyline/
 ├── docs/           architecture, frame buffer model, drawing API
 ├── DESIGN.md       end-to-end walkthrough
 ├── LICENSE         MIT License
+├── NOTICE          attribution for the one vendor binary in kernel/vendor/
 └── AUTHORS         contributors
 ```
 
@@ -80,5 +81,8 @@ riscv-skyline/
 
 ## License
 
-Distributed under the [MIT License](LICENSE). See
-[`AUTHORS`](AUTHORS) for the contributor list.
+Substantively new code (drivers, drawing primitives, allocator, test
+bench, docs, CI) is distributed under the [MIT License](LICENSE).
+One starter binary, `kernel/vendor/demo.o` (the drawing-loop driver),
+is checked in as-is — see [`NOTICE`](NOTICE) for the attribution
+boundary. The contributor list is in [`AUTHORS`](AUTHORS).

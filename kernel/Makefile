@@ -18,10 +18,11 @@ LD      = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
 
-# Both demo.o and memory.o are built from clean-room sources in this
-# directory. Vendor stubs under tools/_vendor/ remain only as historical
-# build shims and are not required for any build target.
-DEMO_OBJ ?= demo.o
+# demo.o is the original starter's drawing-loop driver, kept as a
+# checked-in vendor binary under kernel/vendor/. It calls the eight
+# primitives in mp1.S and the malloc/free in memory.c.
+# memory.o is built from kernel/memory.c (clean-room allocator).
+DEMO_OBJ ?= vendor/demo.o
 MEM_OBJ  ?= memory.o
 
 CORE_OBJS = \

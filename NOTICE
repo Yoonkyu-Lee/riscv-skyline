@@ -1,0 +1,26 @@
+riscv-skyline
+=============
+
+The bulk of this repository (kernel drivers, the eight assembly drawing
+primitives in `kernel/mp1.S`, the allocator in `kernel/memory.c`, the
+test bench, the documentation, the build and CI configuration) was
+authored by Yoonkyu Lee and is distributed under the MIT License (see
+LICENSE).
+
+One file is *not* original to this repo:
+
+  kernel/vendor/demo.o
+
+`demo.o` is the starter scaffolding's drawing-loop driver -- it
+provides `main`, scans PCI for the bochs-display, calls `vga_attach`,
+seeds the scene (stars / lit windows / beacon positions), and runs the
+per-frame redraw loop that calls into the eight primitives in
+`mp1.S`. The original source is not distributed with the starter, so
+the binary is checked in as-is. It produces the visual style the
+README hero shot shows.
+
+A clean-room replacement for `demo.o` is straightforward (~150 LOC of
+C against the `skyline.h` API and `vga.c` driver) and was prototyped
+during development; the vendor binary was kept because the original
+scene composition reads more like a real night skyline than the
+clean-room re-imagining did.

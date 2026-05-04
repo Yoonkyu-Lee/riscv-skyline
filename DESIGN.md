@@ -14,19 +14,16 @@ entry symbol at `0x80000000`. From there:
 1. **`start.s`** sets the stack pointer, installs the trap vector
    (points at `_trap_entry` in `trap.s`), and tail-jumps into
    `main`.
-2. **`main()`** (`demo.c`) runs:
-   - `console_init()` — UART0 console, so `kprintf` works
-   - `intr_init()` — S-mode interrupt enable bits
-   - `find_bochs_display()` — walks PCI bus 0 looking for vendor
-     `0x1234`/device `0x1111` (the QEMU bochs card) and returns its
-     ECAM config-space address
-   - `vga_attach()` — wires up BAR0 (VRAM) and BAR2 (control regs),
-     programs the VBE registers for 640×480×16
-   - `skyline_init()` — clears the four scene globals
-   - `compose_scene()` — seeds 280 stars, lays out 7 buildings with
-     dense lit windows, and starts the lighthouse beacon
-3. The animation loop runs forever, redrawing back-to-front every
-   frame.
+2. **`main()`** (in `kernel/vendor/demo.o`, the original starter
+   driver kept as a checked-in vendor binary) wires up the boot
+   plumbing — console, interrupt enable, PCI scan for the bochs card,
+   `vga_attach`, `skyline_init` — then seeds the scene (stars, lit
+   windows, the lighthouse beacon position) and enters its frame
+   loop.
+3. The frame loop calls into the eight assembly drawing primitives
+   in `mp1.S` every iteration: `draw_star` for each linked-list
+   star, `draw_window` for each entry in `skyline_windows[]`, and
+   `draw_beacon` for the single beacon.
 
 ## PCI / bochs framebuffer wire-up
 
@@ -50,39 +47,21 @@ fbsize` *bytes* (the previous version of this code did
 control window). It then programs the bochs VBE indexes — XRES, YRES,
 BPP, ENABLE — and the framebuffer is live.
 
-## Scene composition
+## Scene composition + frame loop
 
-`compose_scene()` walks 7 buildings left-to-right, each with a
-randomised top edge and width. For each building it:
+The starter driver (`kernel/vendor/demo.o`) handles both. It seeds a
+dense field of stars across the whole screen, lays out clusters of
+small lit windows along the bottom (which form the city silhouette
+implicitly against the black sky), and pins a beacon above the
+tallest cluster. Every frame it clears the framebuffer to black and
+re-issues `draw_star` / `draw_window` / `draw_beacon` calls into
+`mp1.S`.
 
-- saves the silhouette rectangle into `buildings[]` so the frame loop
-  can repaint the dark gray box every frame
-- seeds a dense 6×8 grid of `add_window()` calls inside the building
-  face, picking colors from a yellow→amber palette and skipping ~25%
-  of cells so the lights look "lived in"
-
-It then sprinkles 280 stars across the entire screen (some land
-inside building footprints — they're simply occluded by the
-silhouette in the redraw step) and pins a `start_beacon()` call
-above the tallest building's roof.
-
-## Frame loop
-
-Every frame, drawn back-to-front:
-
-```mermaid
-flowchart LR
-    clear[clear to deep night sky] --> stars[walk linked list, draw_star each]
-    stars --> rect[fill_rect each building silhouette]
-    rect --> wins[walk window array, draw_window each]
-    wins --> bcn[draw_beacon t]
-    bcn --> spin[spin a few M cycles] --> clear
-```
-
-`fill_rect` is the only direct framebuffer write the C side does.
-`draw_star`, `draw_window`, and `draw_beacon` are all assembly in
-`mp1.S` and read coordinates / colors out of the struct passed to
-them.
+The clean-room replacement of this driver was prototyped and is
+trivial against the `skyline.h` API; the vendor binary was kept
+because the original scene reads more like a real city skyline than
+the rewrite did. See [`NOTICE`](NOTICE) for the attribution
+boundary.
 
 ## Drawing primitives (mp1.S)
 
@@ -144,7 +123,7 @@ needing a real display device.
 | ------------------- | --------------------------------------------------- |
 | `kernel/start.s`    | M-mode entry, stack + trap vector setup, `j main`   |
 | `kernel/trap.s`     | trap save/restore, dispatch                         |
-| `kernel/main` (in `demo.c`) | bring-up, PCI scan, scene seed, frame loop  |
+| `kernel/vendor/demo.o`      | starter binary: bring-up, PCI scan, scene seed, frame loop (see NOTICE) |
 | `kernel/vga.c`      | bochs PCI VGA driver (BAR programming + VBE)        |
 | `kernel/mp1.S`      | 8 drawing primitives                                |
 | `kernel/memory.c`   | malloc/free + memory_init                           |
