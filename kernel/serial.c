@@ -8,7 +8,6 @@
 
 #include <stdint.h>
 
-#include "memory.h"
 #include "halt.h"
 #include "intr.h"
 
